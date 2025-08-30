@@ -33,15 +33,24 @@ int get_sphere_by_name(const char *name)
 
 void reclassreset(CHAR_DATA *ch)
 {
+
+ // Reset Stats
+
     for (int i = 0; i < 6; i++)
         ch->perm_stat[i] = pc_race_table[ch->race].stats[i];
+
+ // Reset Age
 
     int newage = 19;
     int oldperm = ch->pcdata->age_mod_perm;
     ch->pcdata->age_mod_perm = (newage - get_age(ch) + oldperm);
 
+ // Reset Exp and Level
+
     ch->exp = 1800;
     ch->level = 1;
+
+// Strip Objects
 
     OBJ_DATA *obj, *obj_next;
     int affmod = (is_affected(ch, gsn_affinity)) ? get_modifier(ch->affected, gsn_affinity) : -1;
@@ -82,28 +91,38 @@ void reclassreset(CHAR_DATA *ch)
         }
     }
 
+ // Strip Affects 
+
     AFFECT_DATA *af;
+
+    if (IS_NAFFECTED(ch, AFF_FLESHTOSTONE) || IS_OAFFECTED(ch, AFF_ENCASE))
+    REMOVE_BIT(ch->act, PLR_FREEZE);
+
     while ((af = ch->affected) != NULL)
         affect_strip(ch, af->type);
 
+ // Clearing Bits except Runes and Bloodpyre 
+
     for (int i = 1; i < 65535; i++)
     {
-        if ((i >= 248 && i <= 266) || (i >= 281 && i <= 296))
+        if ((i >= 248 && i <= 266) || (i >= 281 && i <= 296)) //Runes and Bloodpyre
             continue;
         BIT_CLEAR(ch->pcdata->bitptr, i);
     }
 
-    int BonusHit  = (int)round(ch->max_hit  * 0.05);
-    int BonusMana = (int)round(ch->max_mana * 0.05);
-    int BonusMove = (int)round(ch->max_move * 0.05);
+ // Reset hit,mana,move and apply bonuses
+
+    int BonusHit  = (int)round(ch->max_hit  * 0.06);
+    int BonusMana = (int)round(ch->max_mana * 0.06);
+    int BonusMove = (int)round(ch->max_move * 0.06);
 
     if (BonusHit < 1) BonusHit = 1;
     if (BonusMana < 1) BonusMana = 1;
     if (BonusMove < 1) BonusMove = 1;
 
-    ch->max_hit  += BonusHit;
-    ch->max_mana += BonusMana;
-    ch->max_move += BonusMove;
+    ch->max_hit  = 100 + BonusHit;
+    ch->max_mana = 100 + BonusMana;
+    ch->max_move = 100 + BonusMove;
 
     ch->pcdata->perm_hit  = ch->max_hit;
     ch->pcdata->perm_mana = ch->max_mana;
@@ -111,6 +130,9 @@ void reclassreset(CHAR_DATA *ch)
 
     ch->pcdata->death_count = 0;
     ch->pcdata->age_group = AGE_YOUTHFUL;
+
+ // Reset title
+    set_title(ch, "");
 }
 
 void reclassmsg(CHAR_DATA *ch)
@@ -160,7 +182,7 @@ void do_reclass(CHAR_DATA *ch, char *argument)
     } single_classes[] = {
         {"thief", 12, SPH_THIEF, {TRAIT_FLEET, TRAIT_COWARD, TRAIT_THIEVESCANT}, 3},
         {"bard", 25, SPH_BARD, {0}, 0},
-    	{"fighter", 18, SPH_FIGHTER, {TRAIT_PACK_HORSE, TRAIT_SURVIVOR}, 2},
+	{"fighter", 18, SPH_FIGHTER, {TRAIT_PACK_HORSE, TRAIT_SURVIVOR}, 2},
         {"barbarian", 20, SPH_SWORDMASTER, {TRAIT_HOLLOWLEG}, 1},
         {"gladiator", 21, SPH_GLADIATOR, {TRAIT_AMBIDEXTROUS, TRAIT_EXOTICMASTERY}, 2},
         {"swordmaster", 19, SPH_SWORDMASTER, {TRAIT_AMBIDEXTROUS, TRAIT_SWORDMASTERY}, 2},
