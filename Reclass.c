@@ -186,11 +186,12 @@ void do_reclass(CHAR_DATA *ch, char *argument)
         {"barbarian", 20, SPH_SWORDMASTER, {TRAIT_HOLLOWLEG}, 1},
         {"gladiator", 21, SPH_GLADIATOR, {TRAIT_AMBIDEXTROUS, TRAIT_EXOTICMASTERY}, 2},
         {"swordmaster", 19, SPH_SWORDMASTER, {TRAIT_AMBIDEXTROUS, TRAIT_SWORDMASTERY}, 2},
-        {"watcher", 23, SPH_RANGER, {0}, 0},
+        {"watcher", 13, SPH_THIEFTAKER, {TRAIT_LIGHTSLEEPER, TRAIT_EAGLE_EYED}, 2},
+	{"ranger", 23, SPH_RANGER, {TRAIT_EAGLE_EYED, TRAIT_FLEET}, 2},
         {"psionicist", 28, SPH_PSION, {0}, 0},
         {"assassin", 14, SPH_ASSASSIN, {TRAIT_POISONRES}, 1},
         {"bandit", 15, SPH_BANDIT, {TRAIT_PACK_HORSE}, 1},
-        {"alchemist", 27, SPH_SWORDMASTER, {TRAIT_MORTICIAN}, 1},
+        {"alchemist", 27, SPH_NONE, {TRAIT_MORTICIAN}, 1},
         {"druid", 26, SPH_NATURE, {0}, 0},
     };
 
