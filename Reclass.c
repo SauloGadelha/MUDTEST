@@ -12,6 +12,7 @@
 #include <cmath>
 #include "merc.h"
 #include "interp.h"
+#include "Titles.h"
 
 // Convert string to lowercase in-place
 static void strlower(char *s)
@@ -31,27 +32,40 @@ int get_sphere_by_name(const char *name)
     return -1;
 }
 
+// helper to add scholar groups
+static void add_scholar_groups(CHAR_DATA *ch, const char *major, const char *minor)
+{
+    char buf[MAX_STRING_LENGTH];
+
+    if (strcmp(major, minor) != 0)
+    {
+        snprintf(buf, sizeof(buf), "minor %s v2", minor);
+        group_add(ch, buf, FALSE);
+
+        snprintf(buf, sizeof(buf), "mixed %s %s", major, minor);
+        group_add(ch, buf, FALSE);
+    }
+
+    group_add(ch, class_table[ch->class_num].base_group, FALSE);
+    group_add(ch, class_table[ch->class_num].default_group, FALSE);
+}
+
 void reclassreset(CHAR_DATA *ch)
 {
-
- // Reset Stats
-
+    // Reset Stats
     for (int i = 0; i < 6; i++)
         ch->perm_stat[i] = pc_race_table[ch->race].stats[i];
 
- // Reset Age
-
+    // Reset Age
     int newage = 19;
     int oldperm = ch->pcdata->age_mod_perm;
     ch->pcdata->age_mod_perm = (newage - get_age(ch) + oldperm);
 
- // Reset Exp and Level
-
+    // Reset Exp and Level
     ch->exp = 1800;
     ch->level = 1;
 
-// Strip Objects
-
+    // Strip Objects
     OBJ_DATA *obj, *obj_next;
     int affmod = (is_affected(ch, gsn_affinity)) ? get_modifier(ch->affected, gsn_affinity) : -1;
 
@@ -91,18 +105,16 @@ void reclassreset(CHAR_DATA *ch)
         }
     }
 
- // Strip Affects 
-
+    // Strip Affects 
     AFFECT_DATA *af;
 
     if (IS_NAFFECTED(ch, AFF_FLESHTOSTONE) || IS_OAFFECTED(ch, AFF_ENCASE))
-    REMOVE_BIT(ch->act, PLR_FREEZE);
+        REMOVE_BIT(ch->act, PLR_FREEZE);
 
     while ((af = ch->affected) != NULL)
         affect_strip(ch, af->type);
 
- // Clearing Bits except Runes and Bloodpyre 
-
+    // Clearing Bits except Runes and Bloodpyre 
     for (int i = 1; i < 65535; i++)
     {
         if ((i >= 248 && i <= 266) || (i >= 281 && i <= 296)) //Runes and Bloodpyre
@@ -110,8 +122,7 @@ void reclassreset(CHAR_DATA *ch)
         BIT_CLEAR(ch->pcdata->bitptr, i);
     }
 
- // Reset hit,mana,move and apply bonuses
-
+    // Reset hit,mana,move and apply bonuses
     int BonusHit  = (int)round(ch->max_hit  * 0.06);
     int BonusMana = (int)round(ch->max_mana * 0.06);
     int BonusMove = (int)round(ch->max_move * 0.06);
@@ -131,8 +142,13 @@ void reclassreset(CHAR_DATA *ch)
     ch->pcdata->death_count = 0;
     ch->pcdata->age_group = AGE_YOUTHFUL;
 
- // Reset title
-    set_title(ch, "");
+    // Reset title
+
+    char buf[MAX_STRING_LENGTH];
+
+    sprintf( buf, "%s", Titles::LookupTitle(*ch));
+    set_title( ch, buf );
+    ch->pcdata->extitle = str_dup( "" );
 }
 
 void reclassmsg(CHAR_DATA *ch)
@@ -182,17 +198,17 @@ void do_reclass(CHAR_DATA *ch, char *argument)
     } single_classes[] = {
         {"thief", 12, SPH_THIEF, {TRAIT_FLEET, TRAIT_COWARD, TRAIT_THIEVESCANT}, 3},
         {"bard", 25, SPH_BARD, {0}, 0},
-	{"fighter", 18, SPH_FIGHTER, {TRAIT_PACK_HORSE, TRAIT_SURVIVOR}, 2},
+        {"fighter", 18, SPH_FIGHTER, {TRAIT_PACK_HORSE, TRAIT_SURVIVOR}, 2},
         {"barbarian", 20, SPH_SWORDMASTER, {TRAIT_HOLLOWLEG}, 1},
         {"gladiator", 21, SPH_GLADIATOR, {TRAIT_AMBIDEXTROUS, TRAIT_EXOTICMASTERY}, 2},
         {"swordmaster", 19, SPH_SWORDMASTER, {TRAIT_AMBIDEXTROUS, TRAIT_SWORDMASTERY}, 2},
         {"watcher", 13, SPH_THIEFTAKER, {TRAIT_LIGHTSLEEPER, TRAIT_EAGLE_EYED}, 2},
-	{"ranger", 23, SPH_RANGER, {TRAIT_EAGLE_EYED, TRAIT_FLEET}, 2},
+        {"ranger", 23, SPH_RANGER, {TRAIT_EAGLE_EYED, TRAIT_FLEET}, 2},
         {"psionicist", 28, SPH_PSION, {0}, 0},
         {"assassin", 14, SPH_ASSASSIN, {TRAIT_POISONRES}, 1},
         {"bandit", 15, SPH_BANDIT, {TRAIT_PACK_HORSE}, 1},
         {"alchemist", 27, SPH_NONE, {TRAIT_MORTICIAN}, 1},
-        {"druid", 26, SPH_NATURE, {0}, 0},
+        {"druid", 29, SPH_NATURE, {0}, 0},
     };
 
     int num_single = sizeof(single_classes)/sizeof(single_classes[0]);
@@ -272,8 +288,7 @@ void do_reclass(CHAR_DATA *ch, char *argument)
             return;
         }
 
-        group_add(ch, class_table[ch->class_num].base_group, FALSE);
-        group_add(ch, class_table[ch->class_num].default_group, FALSE);
+        add_scholar_groups(ch, arg2, arg3);
         ch->pcdata->learned[gsn_language_arcane] = 100;
         BIT_SET(ch->pcdata->traits, TRAIT_MAGAPT);
         send_to_char("You have chosen to be reborn as a scholar. So be it.\n\r", ch);
